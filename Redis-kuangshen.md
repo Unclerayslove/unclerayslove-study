@@ -419,13 +419,43 @@ hash变更的数据user name age，尤其是用户信息之类的，经常变动
 
 
 
-
-
 ## Zset
+
+在set的基础上，增加了一个值，set k1 v1 zset k1 score1 v1
+
+~~~bash
+zadd key [NX|XX] [CN] [INCR] score member [score member ...]
+
+#示例
+zadd key 1 one
+zadd key 2 two 3 three	#添加多个值
+
+zrangebyscore key min max [withscores]	#从小到大排序 -inf +inf 正无穷——负无穷
+
+zrevrange key start stop [withscores]	#从大到小排序
+zrevrange key 0 -1
+
+zrem key member [member ...]	#移除某个元素
+
+zcard key	#获取有序集合中的个数
+
+zcount key min max	#获取指定区间的成员数量
+
+~~~
+
+带权重进行判断！比如 普通消息：1，重要消息：2
+
+排行榜应用实现，取Top N测试
+
+
 
 # 三种特殊数据类型
 
-## geospatial
+## geospatial 地理位置
+
+朋友的地位，附近的人，打车距离计算
+
+Redis的Geo在Redis3.2版本就推出了
 
 ## hyperloglog
 
