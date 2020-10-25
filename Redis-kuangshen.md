@@ -457,6 +457,17 @@ zcount key min max	#获取指定区间的成员数量
 
 Redis的Geo在Redis3.2版本就推出了
 
+可以查询一些测试数据
+
+```bash
+geoadd key longitude latitude member [longitude latitude member ...]	#添加地理位置
+# 规则：两级无法直接添加，我们一般会下载城市数据，直接通过java程序一次性导入
+# 参数：key 经度 纬度 名称
+geoadd china:city 116.40 39.90 beijing
+```
+
+
+
 ## hyperloglog
 
 ## bitmaps
