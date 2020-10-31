@@ -186,7 +186,7 @@ CPU > 内存 > 硬盘的速度要有所了解
 
 全段翻译：
 
-Redis是一个开源（BSD许可），内存中的数据结构存储，用作**数据库**、**缓存**和**消息中间件（MQ）**。它支持数据结构，如字符串、哈希、列表、集合、带范围查询的排序集、位图、超日志、带有radius查询和流的地理空间索引。Redis内置了复制、Lua脚本、LRU逐出、事务和不同级别的磁盘持久性，并通过Redis Sentinel和Redis Cluster自动分区来提供高可用性。了解更多→
+Redis是一个开源（BSD许可），内存中的数据结构存储，用作**数据库**、**缓存**和**消息中间件（MQ）**。它支持数据结构，如字符串、哈希、列表、集合、带范围查询的排序集、位图、超日志、带有radius查询和流的地理空间索引。**Redis内置了复制、Lua脚本、LRU逐出、事务和不同级别的磁盘持久性**，并通过Redis Sentinel和Redis Cluster自动分区来提供高可用性。了解更多
 
 ## Redis-key
 
@@ -460,18 +460,191 @@ Redis的Geo在Redis3.2版本就推出了
 可以查询一些测试数据
 
 ```bash
-geoadd key longitude latitude member [longitude latitude member ...]	#添加地理位置
+#添加地理位置	
+GEOADD key longitude latitude member [longitude latitude member ...]   
 # 规则：两级无法直接添加，我们一般会下载城市数据，直接通过java程序一次性导入
 # 参数：key 经度 纬度 名称
 geoadd china:city 116.40 39.90 beijing
+
+#获取指定的城市的 经度和纬度
+GEOPOS key member [member ...]
+
+#获取两地之间的距离  unit单位可以是m：米 km：千米 mi：英里 ft：英尺
+GEODIST key member1 member2 [unit]
 ```
+
+> georadius 以给定的经纬度为中心，找出某一半径内的元素
+
+我附近的人？（手机定位，获取所有附近的人的地址，定位）通过半径来查询！
+
+~~~bash
+# 以这个经纬度为中心，寻找以radius为半径的方圆范围内的数据
+GEORADIUS key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count] [ASC|DE 
+
+#找出位于指定元素周围的其他元素
+GEORADIUSBYMEMBER key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count] [ASC|DESC] 
+
+#返回11个字符的geohash字符串
+GEOHASH key member [member ...]
+
+#geospatial底层本质还是zset数据结构，所以可以用zset的相关命令
+
+~~~
 
 
 
 ## hyperloglog
 
+> 什么是基数？
+
+A={1,3,5,7,8,7,8}
+
+B={1,3,5,7,8,}
+
+基数（不重复的元素） =  5，可以接受误差
+
+> 简介
+
+Redis2.8.9版本就更新了Hyperloglog数据结构
+
+Redis Hyperloglog 基数统计的算法
+
+有点：占用的内存是固定的，2^64不同的元素的计数，只需要废12kb内存！如果从内存的角度出发的话，Hyperloglog比较合适
+
+**网页的UV（以恶个人访问一个网站多次，但是还是算作一个人）**
+
+传统的方式，set保存用户的ID，然后就可以统计set元素中的数量作为标准判断
+
+这个方式如果保存大量的用户id，就会比较麻烦！我们的目的是为了计数，而不是保存用户id；
+
+0.81% 的错误率，但是可以接受
+
+~~~bash
+# 创建一组元素
+PFADD key element [element ...]
+
+# 统计key中的基数数量
+PFCOUNT key [key ...]
+
+# 合并
+PFMERGE destkey sourcekey [sourcekey ...]  
+
+
+# 底层是string类型 可以用string相关的命令
+~~~
+
+
+
+
+
 ## bitmaps
 
+> 位存储   存储 0 1
+>
+
+比如统计疫情感染人数： 0未感染 1感染 
+
+统计用户信息，活跃：不活跃   登录：未登录
+
+打卡：365天打卡，两个状态的都可以使用Bitmaps
+
+Bitmaps位图，数据结构！都是操作二进制位来进行记录，就只有0和1两个状态
+
+365 = 365bit 1字节=8bit 64字节左右
+
+~~~bash
+#
+SETBIT key offset value
+
+# 栗子：使用bitmaps来记录 周一到周日的打卡
+# 周一：1 周二：0 周三：0  周四：1 ....
+127.0.0.1:6379> SETBIT sign 0 1
+(integer) 0
+127.0.0.1:6379> SETBIT sign 1 0
+(integer) 0
+127.0.0.1:6379> SETBIT sign 2 0
+(integer) 0
+127.0.0.1:6379> SETBIT sign 3 1
+(integer) 0
+127.0.0.1:6379> SETBIT sign 4 1
+(integer) 0
+127.0.0.1:6379> SETBIT sign 5 0
+(integer) 0
+127.0.0.1:6379> SETBIT sign 6 1
+(integer) 0
+
+# 查看某一天是否有打卡
+GETBIT key offset
+127.0.0.1:6379> GETBIT sign 3
+(integer) 1
+
+#统计打卡天数
+BITCOUNT key [start end]
+
+~~~
+
+
+
+# 事务
+
+MySQL：ACID
+
+要么全部成功，要么全部失败
+
+**Redis单条命令是保证原子性的，但是事务不保证原子性！**
+
+Redis事务本质：一组命令的集合！！一个事务中的所有命令都会被序列化，在事务执行过程中，会按照顺序执行！
+
+一次性、顺序性、排他性！执行一系列的命令
+
+~~~
+------- 队列 set set set 执行-------
+~~~
+
+**Redis事务没有隔离级别的概念！！**
+
+所有的命令在事务中，并没有直接被执行！只有发起执行命令的时候才会执行！Exec
+
+redis的事务：
+
+- 开启事务（multi）
+- 命令入队（...）
+- 执行事务（exec）
+
+> 正常执行事务
+
+~~~bash
+#开启事务后，set key value  就会先进入队列 ，此时并没有真正的执行；等到执行exec命令后，再执行
+127.0.0.1:6379> MULTI	# 开启事务
+OK
+# 命令入队
+127.0.0.1:6379> set k1 v1
+QUEUED
+127.0.0.1:6379> get k1
+QUEUED
+127.0.0.1:6379> set k2 v2
+QUEUED
+127.0.0.1:6379> EXEC	#执行事务
+1) OK
+2) "v1"
+3) OK
+127.0.0.1:6379> get k1
+"v1"
+127.0.0.1:6379> get k2
+"v2"
+127.0.0.1:6379> keys 8
+(empty list or set)
+127.0.0.1:6379> KEYS *
+1) "k2"
+2) "k1"
+127.0.0.1:6379> 
+~~~
+
+> 放弃事务
+
+~~~bash
+DISCARD	#取消事务后，事务队列中的命令不会执行
+~~~
 
 
 
@@ -483,6 +656,17 @@ geoadd china:city 116.40 39.90 beijing
 
 
 
+# Jedis
 
+# SpringBoot整合
 
+# Redis.conf详解
+
+# Redis持久化
+
+# Redis发布订阅
+
+# Redis主从复制
+
+# Redis缓存穿透和雪崩
 
