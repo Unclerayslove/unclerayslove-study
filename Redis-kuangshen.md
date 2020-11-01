@@ -1,3 +1,7 @@
+
+
+
+
 NoSQL：not only SQL
 
 # NoSQL的四大分类：
@@ -646,21 +650,428 @@ QUEUED
 DISCARD	#取消事务后，事务队列中的命令不会执行
 ~~~
 
+> 监控！Watch（面试常问！）
 
+**悲观锁：**
 
+- 很悲观，认为什么时候都会出问题，无论做什么都会加锁！
 
+**乐观锁：**
 
+- 很乐观，认为什么时候都不会出现问题，所以不会上锁！更新数据的时候去判断一下，在此期间是否有人修改过这个数据，比如像MySQL的version！
+- 获取version
+- 更新的时候比较version
 
+> Redis的监视测试
 
+正常执行成功！
 
+~~~bash
+127.0.0.1:6379> set money 100
+OK
+127.0.0.1:6379> set out 0
+OK
+127.0.0.1:6379> WATCH money	# 监视 money 对象
+OK
+127.0.0.1:6379> MULTI	# 事务正常结束， 数据期间没有发生变动，这个时候就正常执行成功
+OK
+127.0.0.1:6379> DECRBY money 20
+QUEUED
+127.0.0.1:6379> INCRBY out 20
+QUEUED
+127.0.0.1:6379> EXEC
+1) (integer) 80
+2) (integer) 20
 
+~~~
 
+测试多线程修改值，使用watch可以当作redis的乐观锁操作！
+
+~~~bash
+# 线程1
+127.0.0.1:6379> WATCH money	# 监视 money 
+OK
+127.0.0.1:6379> MULTI
+OK
+127.0.0.1:6379> DECRBY money 10
+QUEUED
+127.0.0.1:6379> INCRBY out 10
+QUEUED
+127.0.0.1:6379> EXEC	# 执行之前，另外一个线程，修改了我们的值，这个时候，就会导致事务执行失败！
+(nil)
+
+# 线程2
+127.0.0.1:6379> get money
+"80"
+127.0.0.1:6379> set money 1000
+OK
+127.0.0.1:6379> 
+~~~
+
+如果修改失败，获取最新的值就好
+
+~~~bash
+127.0.0.1:6379> UNWATCH	# 1、如果发现事务执行失败，就通过unwatch先解锁
+OK
+127.0.0.1:6379> WATCH money	#2、获取最新的值，再次监视， 相当于select version
+OK
+127.0.0.1:6379> MULTI
+OK
+127.0.0.1:6379> DECRBY money 1
+QUEUED
+127.0.0.1:6379> INCRBY money 1
+QUEUED
+127.0.0.1:6379> EXEC	# 3、对比监视的值是否发生了变化，如果没有变化，那么可以执行成功；如果变了就执行失败！
+1) (integer) 999
+2) (integer) 1000
+~~~
 
 # Jedis
 
+我们要使用Java来操作Redis
+
+> 什么是Jedis？ 是Redis官方推荐的java连接开发工具！使用Java操作Redis中间件！如果你要使用Java操作Redis，那么一定要对Jedis十分的熟悉！
+
+知其然并知其所以然，授人以渔！
+
+> 测试
+
+1、导入对应的依赖
+
+~~~xml
+<!--导入jedis的包-->
+    <dependencies>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.68</version>
+        </dependency>
+    </dependencies>
+~~~
+
+2、编码测试：
+
+- 连接数据库
+- 操作命令
+- 断开连接
+
+~~~java
+package com.uncle;
+
+import redis.clients.jedis.Jedis;
+
+/**
+ * @program: uncle-ray
+ * @description:
+ * @author: lei pei
+ * @create: 2020-11-01 10:51
+ */
+public class TestPing {
+    public static void main(String[] args) {
+        // 1、new Jedis对象即可
+        Jedis jedis = new Jedis("127.0.0.1", 6379);
+        // jedis 所有的命令就是我们之前学习的所有指令
+        System.out.println(jedis.ping());
+    }
+}
+
+~~~
+
+## 常用的API
+
+String
+
+List
+
+Set
+
+Hash
+
+Zset
+
+> 所有的api命令。就是我们对应的上面学习的指令，一个都没有变化！
+
+
+
 # SpringBoot整合
 
+SpringBoot操作数据：Spring-Data，比如
+
+- Spring-Data JDBC
+- Spring-Data JPA
+- Spring-Data MongoDB
+- Spring-Data Redis
+
+SpringData也是和SpringBoot齐名的项目！
+
+说明：在SpringBoot2.x之后，原来使用的jedis被替换为了lettuce
+
+jedis：采用的直连，多个线程操作的话，是不安全的，如果想要避免不安全的，使用jedis pool连接池！！！更像BIO模式，是同步阻塞的
+
+lettuce：底层采用netty，实例可以在多个线程中进行共享，不存在线程不安全的情况！可以减少线程数量了，更像NIO模式，是同步非阻塞的
+
+## 源码分析
+
+SpringBoot的spring-boot-autoconfigure的所有配置类，都有一个自动配置类	 `RedisAutoConfiguration`
+
+自动配置类都会绑定一个properties配置文件	`RedisProperties`
+
+~~~java
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnClass(RedisOperations.class)
+@EnableConfigurationProperties(RedisProperties.class)
+@Import({ LettuceConnectionConfiguration.class, JedisConnectionConfiguration.class })
+public class RedisAutoConfiguration {
+
+	@Bean
+	@ConditionalOnMissingBean(name = "redisTemplate")//我们可以自己定义一个redisTemplate来替换这个默认的！！
+	public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory)
+			throws UnknownHostException {
+        // 默认的 RedisTemplate 没有过多的设置，redis对象都是需要序列化！比如Dubbo的实体也需要序列化
+        // 两个泛型都是 <Object,Object>的类型，我们后面使用需要强制转换<String,Object>
+		RedisTemplate<Object, Object> template = new RedisTemplate<>();
+		template.setConnectionFactory(redisConnectionFactory);
+		return template;
+	}
+
+	@Bean
+	@ConditionalOnMissingBean// 由于String 是redis中最常使用的类型，所以说单独提出来了一个bean！
+	public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory)
+			throws UnknownHostException {
+		StringRedisTemplate template = new StringRedisTemplate();
+		template.setConnectionFactory(redisConnectionFactory);
+		return template;
+	}
+
+}
+~~~
+
+> 整合测试一下
+
+1、导入依赖
+
+~~~xml
+<!--redis整合-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+~~~
+
+2、配置连接
+
+~~~yaml
+# 配置redis
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 6379
+~~~
+
+3、测试！
+
+~~~java
+   @Autowired
+    RedisTemplate redisTemplate;
+
+    @Test
+    void contextLoads() {
+        // redisTemplate    操作不同的数据类型，api和我们的指令是一样的
+        // redisTemplate.opsForValue()  操作字符串 类似String
+        // redisTemplate.opsForList()   操作List 类似List
+        // redisTemplate.opsForSet()    操作Set 类似Set，无序集合
+        // redisTemplate.opsForHash()   操作Hash 哈希
+        // redisTemplate.opsForZSet()   操作ZSet 有序集合
+        // redisTemplate.opsForGeo()    操作地理位置 范围查询
+        // redisTemplate.opsForHyperLogLog()    操作超日志，比如基数统计
+
+        // 除了基本的操作，我们常用的方法都是可以直接通过redisTemplate操作，比如事务，和基本的CURD
+
+        // 获取redis的连接对象
+//        RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
+//        System.out.println(connection);
+        //org.springframework.data.redis.connection.lettuce.LettuceConnection@33060020
+//        connection.flushDb();
+//        connection.flushAll();
+
+        redisTemplate.opsForValue().set("myKey","叔叔大法好");
+        Object myKey = redisTemplate.opsForValue().get("myKey");
+        System.out.println(myKey);
+
+    }
+~~~
+
+## 序列化的问题
+
+redisTemplate默认是使用的jdk自带的序列化（JdkSerializationRedisSerializer），但在日常工作中，我们可以更多使用Json来传输数据，因此因为我们自定义JSON格式的序列化
+
+如果传输的是一个对象，那么所有的对象都是需要序列化的，所以工作中所有pojo类都需要进行序列化；否则运行时会报错！！！
+
+我们来编写一个自己的RedisTemplate
+
+~~~java
+@Configuration
+public class RedisConfig {
+    // 这是一个固定模板，拿来就可以直接使用
+    // 自己定义一个 RedisTemplate
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory)
+            throws UnknownHostException {
+        // 我们为了开发方便，一般直接使用<String, Object>类型
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        // 连接工厂
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // 配置具体的序列化方式 比如这里使用Json解析所有的对象
+        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
+        ObjectMapper om = new ObjectMapper();
+        om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        // 因为enableDefaultTyping已经弃用了，这是使用activateDefaultTyping来代替
+        om.activateDefaultTyping(
+                LaissezFaireSubTypeValidator.instance,
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.WRAPPER_ARRAY);
+        jackson2JsonRedisSerializer.setObjectMapper(om);
+
+        // String 的序列化
+        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+        // key和hash的key采用String的序列化方式
+        template.setKeySerializer(stringRedisSerializer);
+        template.setHashKeySerializer(stringRedisSerializer);
+
+        // value和hash的value采用Jackson的序列化方式
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+        template.afterPropertiesSet();
+
+        return template;
+    }
+
+}
+~~~
+
+所有的redis操作，其实对于java开发人员来说，十分的简单，更重要是要去理解redis的思想和每一种数据结构的用处和作用场景！！！
+
 # Redis.conf详解
+
+启动的时候，就通过配置文件来启动的
+
+> 单位
+
+配置文件 unit单位 对大小写不敏感             
+
+> 网络 NETWORK
+
+~~~bash
+bind 127.0.0.1		#绑定IP
+protected-mode yes	#保护模式
+port 6379			#端口
+~~~
+
+
+
+> 通用 GENERAL
+
+~~~bash
+daemonize yes #以守护进程的方式运行，默认是no，我们需要自己开启为yes
+pidfile /var/run/redis_6379.pid #如果以后台的方式运行，我们就需要指定一个pid文件
+
+#日志
+# Specify the server verbosity level.
+# This can be one of:
+# debug (a lot of information, useful for development/testing)
+# verbose (many rarely useful info, but not a mess like the debug level)
+# notice (moderately verbose, what you want in production probably)
+# warning (only very important / critical messages are logged)
+loglevel notice
+logfile "" 		#日志的文件位置名
+databases 16 	#数据库的数量，默认是16个数据库
+always-show-logo yes	#是否总是显示LOGO
+
+~~~
+
+> 快照 SNAPSHOTTING
+
+持久化，在规定的时间内，执行了多少次操作，则会持久化到文件 .rdb .aof中
+
+redis是内存数据库，如果没有持久化，那么数据断电即失
+
+~~~bash
+# 如果900秒，如果至少有1个key进行了修改，我们就进行持久化操作！
+save 900 1
+save 300 10
+save 60 10000
+
+stop-writes-on-bgsave-error yes	#持久化如果出错，是否需要继续工作，默认开启
+rdbcompression yes	# 是否压缩 rdb 文件，需要消耗一些cpu资源
+rdbchecksum yes		# 保存rdb文件的时候，进行错误的检查校验
+dir ./	#rdb 文件保存的目录
+~~~
+
+
+
+> 主从复制 REPLICATION
+
+replication
+
+
+
+> 安全 SECURITY
+
+可以在这里设置redis的密码，默认是没有密码
+
+设置密码后需要认证，auth
+
+~~~bash
+#	设置密码
+requirepass foobared
+
+auth 认证登录
+~~~
+
+
+
+> 限制 LIMITS
+
+```bash
+maxclients 10000		# 设置能连接上redis的最大客户端的数量
+maxmemory <bytes>		# redis配置最大的内存容量
+maxmemory-policy noeviction	# 内存到达上限之后的处理策略；类似于线程池拒绝策略
+	# 比如移除一些过期的key
+	# 报错
+# volatile-lru -> remove the key with an expire set using an LRU algorithm
+# allkeys-lru -> remove any key according to the LRU algorithm
+# volatile-random -> remove a random key with an expire set
+# allkeys-random -> remove a random key, any key
+# volatile-ttl -> remove the key with the nearest expire time (minor TTL)
+# noeviction -> don't expire at all, just return an error on write operations
+```
+
+
+
+> aof配置 APPEND ONLY MODE模式
+
+~~~bash
+appendonly no	#默认是不开启aof模式的，默认是使用rdb方式持久化的，在大部分所有的情况下，rdb完全够用
+appendfilename "appendonly.aof"	#aof持久化的文件名称
+
+# appendfsync always	# 每次修改都会 sync
+appendfsync everysec	# 每秒执行一次  sync
+# appendfsync no		# 不执行 sync
+~~~
+
+
+
+
+
+
+
+
 
 # Redis持久化
 
