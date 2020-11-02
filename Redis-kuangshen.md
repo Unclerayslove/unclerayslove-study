@@ -1067,13 +1067,63 @@ appendfsync everysec	# 每秒执行一次  sync
 
 
 
-
-
-
-
-
-
 # Redis持久化
+
+博客详解：https://baijiahao.baidu.com/s?id=1654694618189745916&wfr=spider&for=pc
+
+面试和工作，持久化都是重点！
+
+Redis是内存数据库，如果不将内存中的数据库状态保存到磁盘，那么一旦服务器进程退出，服务器中的数据库状态也会消失
+
+。所以Redis提供了持久化功能！！
+
+### RDB
+
+
+
+![img](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1604304474302&di=f46728fd966537b7a85359b1cc7544fe&imgtype=0&src=http%3A%2F%2Fimg-blog.csdnimg.cn%2F20200806122033485.png%3Fx-oss-process%3Dimage%2Fwatermark%2Ctype_ZmFuZ3poZW5naGVpdGk%2Cshadow_10%2Ctext_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dvb19ob21l%2Csize_16%2Ccolor_FFFFFF%2Ct_70)
+
+
+
+rdb保存的文件时dump.rdb 都是在我们的配置文件快照中配置的
+
+> 触发机制
+
+1、sava的规则满足的情况下，会自动触发rdb规则！！
+
+2、执行flushall命令，也会触发我们的rdb规则！
+
+3、退出redis，也会产生rdb文件！
+
+备份就会自动生成一个dump.rdb文件
+
+> 如何恢复rdb文件！
+
+1、只需要将rdb文件放在我们redis启动目录就可以，redis启动的时候会自动检查dump.rdb恢复其中的数据
+
+
+
+
+
+
+
+### AOF
+
+![img](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1604305346550&di=61fe1344d59f6e5297b05f8028f31188&imgtype=0&src=http%3A%2F%2Fimg-blog.csdnimg.cn%2F20200806160506162.png%3Fx-oss-process%3Dimage%2Fwatermark%2Ctype_ZmFuZ3poZW5naGVpdGk%2Cshadow_10%2Ctext_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dvb19ob21l%2Csize_16%2Ccolor_FFFFFF%2Ct_70)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Redis发布订阅
 
