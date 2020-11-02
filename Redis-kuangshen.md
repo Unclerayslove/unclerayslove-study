@@ -1073,19 +1073,25 @@ appendfsync everysec	# 每秒执行一次  sync
 
 面试和工作，持久化都是重点！
 
-Redis是内存数据库，如果不将内存中的数据库状态保存到磁盘，那么一旦服务器进程退出，服务器中的数据库状态也会消失
+Redis是内存数据库，如果不 将内存中的数据库状态保存到磁盘，那么一旦服务器进程退出，服务器中的数据库状态也会消失
 
 。所以Redis提供了持久化功能！！
 
-### RDB
+## RDB（Redis DataBase）
+
+> 什么是RDB
 
 
 
 ![img](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1604304474302&di=f46728fd966537b7a85359b1cc7544fe&imgtype=0&src=http%3A%2F%2Fimg-blog.csdnimg.cn%2F20200806122033485.png%3Fx-oss-process%3Dimage%2Fwatermark%2Ctype_ZmFuZ3poZW5naGVpdGk%2Cshadow_10%2Ctext_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dvb19ob21l%2Csize_16%2Ccolor_FFFFFF%2Ct_70)
 
+在指定的时间间隔内将内存中的数据集快照写入磁盘，也就是行话讲的Snapshot快照，它恢复时是将快照文件直接读到内存里。
 
+Redis会单独创建（fork）一个子进程来进行持久化，会先将数据写入到一个临时文件中，待持久化过程都结束了，再用这个临时文件替换上次持久化好的文件。整个过程中，主进程是不进行任何IO操作的。这就确保了极高的性能。如果需要进行大规模数据的恢复，且对于数据恢复的完整性不是非常敏感，那RDB方式要比AOF方式更加的高效。RDB的缺点是最后一次持久化后的数据可能丢失。我们默认的就是RDB，一般情况下不需要修改这个配置！
 
-rdb保存的文件时dump.rdb 都是在我们的配置文件快照中配置的
+有时候在生产环境我们会将这个文件进行备份！
+
+==rdb保存的文件时dump.rdb==  都是在我们的配置文件快照中配置的
 
 > 触发机制
 
@@ -1099,27 +1105,93 @@ rdb保存的文件时dump.rdb 都是在我们的配置文件快照中配置的
 
 > 如何恢复rdb文件！
 
-1、只需要将rdb文件放在我们redis启动目录就可以，redis启动的时候会自动检查dump.rdb恢复其中的数据
+1、只需要将rdb文件放在我们redis启动目录就可以，redis启动的时候会自动检查dump.rdb恢复其中的数据！
+
+2、查看需要存在的位置
+
+~~~bash
+config get dir
+"dir"
+"/usr/local/bin"	#如果在这个目录下存在 dump.rdb文件，启动就会自动恢复其中的数据
+~~~
+
+> 几乎就它自己默认的配置就够用了，但是我们还是需要去学习！
+
+有点：
+
+1、适合大规模的数据恢复！dump.rdb
+
+2、对数据的完整性不高！
+
+缺点：
+
+1、需要一定的时间间隔进行操作！如果redis意外宕机了，这个最后一次修改的数据就没有了！
+
+2、fork子进程的时候，会占用一定的内存空间！
 
 
 
+## AOF（Append Only File）
 
+追加文件，将我们所有的命令都记录下来，history，恢复的时候就把这个文件全部再执行一遍！
 
-
-
-### AOF
+> 是什么
 
 ![img](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1604305346550&di=61fe1344d59f6e5297b05f8028f31188&imgtype=0&src=http%3A%2F%2Fimg-blog.csdnimg.cn%2F20200806160506162.png%3Fx-oss-process%3Dimage%2Fwatermark%2Ctype_ZmFuZ3poZW5naGVpdGk%2Cshadow_10%2Ctext_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L1dvb19ob21l%2Csize_16%2Ccolor_FFFFFF%2Ct_70)
 
+以日志的形式记录每个写操作，将Redis执行过的所有指令记录下来（读操作不记录），只许追加文件但不可以改写文件，redis启动之初会读取该文件重新构建数据，换言之，redis重启的话就根据日志文件的内容将写指令从前到后执行一次以完成数据的恢复工作！
 
+==AOF保存的是appendonly.aof文件==
 
+默认是不开启的，需要手动开启配置，将appendonly 由no改为yes就开启了
 
+> 重写规则说明
 
+aof默认就是文件的无限追加，文件会越来越大！
 
+```bash
+auto-aof-rewrite-percentage 100
+auto-aof-rewrite-min-size 64mb
+```
 
+如果aof文件大于64m，太大了！redis就会fork一个新的进程来将我们的文件进行重写！
 
+AOF文件重写是把Redis进程内的数据转化为==写命令==同步到新AOF文件的过程
 
+重写 aof 后 为什么么可以变小：
 
+- 清除了一些无效命令 eg. del srem
+- 进程内超时的数据不再写入 aof 文件
+- 多条写命令可以合并为批量写命令 eg. lpush list v1 lpush list v2 lpush list v3 合并为一条写入命令 lpush list v1 v2 v
+
+redis aof重写机制：https://blog.csdn.net/Andy86869/article/details/89005638
+
+> 优点和缺点
+
+~~~bash
+appendonly no	#默认是不开启aof模式的，默认是使用rdb方式持久化的，在大部分所有的情况下，rdb完全够用
+appendfilename "appendonly.aof"	#aof持久化的文件名称
+
+# appendfsync always	# 每次修改都会 sync
+appendfsync everysec	# 每秒执行一次  sync
+# appendfsync no		# 不执行 sync
+
+# rewrite 重写
+~~~
+
+优点：
+
+1、每一次修改都同步，文件的完整性会更好！
+
+2、每秒同步一次，可能只会丢失一秒的数据
+
+3、从不同步，效率最高的！
+
+缺点：
+
+1、相对于数据文件来说，aof远远大于rdb，修复的速度也比rdb慢！
+
+2、AOF运行效率也要比RDB慢，所有我们redis默认的配置就是rdb持久化！
 
 
 
@@ -1127,7 +1199,11 @@ rdb保存的文件时dump.rdb 都是在我们的配置文件快照中配置的
 
 # Redis发布订阅
 
+
+
 # Redis主从复制
+
+
 
 # Redis缓存穿透和雪崩
 
