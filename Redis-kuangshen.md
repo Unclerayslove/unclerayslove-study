@@ -1218,11 +1218,301 @@ appendfsync everysec	# 每秒执行一次  sync
 
 # Redis发布订阅
 
+Redis发布订阅（pub/sub）是一种==消息通信模式==：发送者（pub）发送消息，订阅者（sub）接受消息。
 
+Redis客户端可以订阅任意数量的频道。
+
+订阅/发布消息图：
+
+第一个：消息发送者，第二个：频道，第三个：消息订阅者！
+
+![img](https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=862089970,2078447295&fm=26&gp=0.jpg)
+
+------
+
+<img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1604509069225&amp;di=6539d0896b840d60b4a58fa4f22199ac&amp;imgtype=0&amp;src=http%3A%2F%2Fimage.bubuko.com%2Finfo%2F201809%2F20180926231933462880.png" alt="img" style="zoom:150%;" />
+
+------
+
+> 命令
+
+<img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1604509352848&amp;di=75c446e85eddd3af5c027d64c64076f3&amp;imgtype=0&amp;src=http%3A%2F%2Fimg-blog.csdnimg.cn%2F20201006154504330.png%3Fx-oss-process%3Dimage%2Fwatermark%2Ctype_ZmFuZ3poZW5naGVpdGk%2Cshadow_10%2Ctext_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2wyNDcwMzM0NDkz%2Csize_16%2Ccolor_FFFFFF%2Ct_70%23pic_cente" alt="img" style="zoom:150%;" />
+
+------
+
+> 测试
+
+订阅端：
+
+~~~bash
+127.0.0.1:6379> SUBSCRIBE uncle
+Reading messages... (press Ctrl-C to quit)
+1) "subscribe"
+2) "uncle"
+3) (integer) 1
+# 等待读取推送的消息
+1) "message"	#消息
+2) "uncle"		#哪个频道的消息
+3) "love"		#消息的具体内容
+1) "message"
+2) "uncle"
+3) "hello redis"
+
+~~~
+
+发送端：
+
+~~~bash
+127.0.0.1:6379> PUBLISH uncle "love"	#发布者发布消息
+(integer) 1
+127.0.0.1:6379> PUBLISH uncle "hello redis"
+(integer) 1
+127.0.0.1:6379> 
+~~~
+
+> 原理
+
+Redis是使用C实现的，通过分析Redis源码里的pubsub.c文件，了解发布和订阅机制的底层实现，借此加深对Redis的理解。
+
+Redis通过PUBLISH、SUBSCRIBE和PSUBSCRIBE等命令实现发布和订阅功能。
+
+通过SUBSCRIBE命令订阅某频道后，redis-server里维护了一个字典，字典的键就是一个个channel，而字典的值则是一个链表，链表中保存了所有订阅这个channel的客户端。SUBSCRIBE命令的关键，就是将客户端添加到给定channel的订阅链表中。
+
+通过PUBLISH命令向订阅者发送消息，redis-server会使用给定的频道作为键，在它所维护的channel字典中查找记录了订阅这个频道的所有客户端的链表，遍历这个链表，将消息发布给所有订阅者。
+
+Pub/Sub从字面上理解就是发布（Publish）与订阅（Subcribe），在Redis中，你可以设定某一个key值进行消息发布及消息订阅，当一个key值进行了消息发布后，所有订阅它的客户端都会收到相应的消息。这一功能最明显的用法就是用作实时消息系统，比如普通的即时聊天、群聊等功能。
+
+使用场景：
+
+1、实时消息系统
+
+2、实时聊天！（频道当作聊天室，将信息回显给所有人即可）
+
+3、订阅，关注系统都是可以的
+
+稍微复杂的场景我们就会使用 消息中间件（MQ）——这是专业的
 
 
 
 # Redis主从复制
+
+![img](https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=4200046827,1072688053&fm=26&gp=0.jpg)
+
+主从复制，读写分离！80%的情况下都是在进行读操作！将读操作在从机上操作，减缓服务器的压力！架构中经常使用！
+
+只要在公司中，主从复制就是必须要使用的，因为在真实的项目中不可能单机使用Redis！
+
+一主二从：本地搭建一个伪集群
+
+## 环境配置
+
+只配置从库，不用配置主库！
+
+~~~bash
+# 启动redis服务，并打开客户端
+./redis-server redis.cong
+./redis-cli
+
+127.0.0.1:6379> info replication	#查看当前库的信息
+# Replication
+role:master			#角色 master
+connected_slaves:0	#没有从机
+master_replid:3a34d3b6c869865e5f735b382039b6bf9bec6331
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+127.0.0.1:6379> 
+~~~
+
+复制3个配置文件，然后修改对应的信息
+
+1、端口
+
+2、pid名字
+
+3、log文件名字
+
+4、dump.rdb名字
+
+~~~bash
+[root@unclerayslove bin]# ls
+dump.rdb  redis-benchmark  redis-check-aof  redis-check-rdb  redis-cli  redis.conf  redis-sentinel  redis-server
+[root@unclerayslove bin]# ps -ef|grep redis
+root     122406      1  0 23:10 ?        00:00:00 ./redis-server 127.0.0.1:6379
+root     122476      1  0 23:10 ?        00:00:00 ./redis-server 127.0.0.1:6380
+root     122506      1  0 23:11 ?        00:00:00 ./redis-server 127.0.0.1:6381
+root     122530 121540  0 23:11 pts/4    00:00:00 grep --color=auto redis
+[root@unclerayslove bin]# 
+~~~
+
+
+
+## 一主二从
+
+==默认情况下，每台Redis服务器都是主节点==；我们一般情况下只用配置从机就好了
+
+认老大！！！一主（79）二从（80、81）
+
+真实的主从配置应该在配置文件中，这样的话是永久的，我们这里使用的是命令，是暂时的！
+
+```bash
+################################# REPLICATION #################################
+
+# Master-Replica replication. Use replicaof to make a Redis instance a copy of
+# another Redis server. A few things to understand ASAP about Redis replication.
+#
+#   +------------------+      +---------------+
+#   |      Master      | ---> |    Replica    |
+#   | (receive writes) |      |  (exact copy) |
+#   +------------------+      +---------------+
+#
+# 1) Redis replication is asynchronous, but you can configure a master to
+#    stop accepting writes if it appears to be not connected with at least
+#    a given number of replicas.
+# 2) Redis replicas are able to perform a partial resynchronization with the
+#    master if the replication link is lost for a relatively small amount of
+#    time. You may want to configure the replication backlog size (see the next
+#    sections of this file) with a sensible value depending on your needs.
+# 3) Replication is automatic and does not need user intervention. After a
+#    network partition replicas automatically try to reconnect to masters
+#    and resynchronize with them.
+#
+replicaof <masterip> <masterport>
+
+```
+
+> 细节
+
+主机负责写，从机不能写只能读！主机中的所有信息和数据，都会自动被从机保存！
+
+~~~bash
+127.0.0.1:6381> set k1 v1
+(error) READONLY You can't write against a read only replica. #从机写的时候就会报错
+127.0.0.1:6381> 
+
+~~~
+
+测试：主机断开连接，从机依旧连接到主机的，但是没有写操作，这个时候，主机如果回来了，从机依旧可以直接获取到主机写的信息！——这是保证集群高可用性！！
+
+如果是使用命令行slaveof，来配置的主从，这个时候从机如果重启了，就会变回主机！只要变为从机，立马就会从主机中获取值！
+
+> 复制原理
+
+Slave启动成功连接到Master后会发送一个sync同步命令
+
+Master接到命令，启动后台的存盘进程，同事收集所有接收到的用于修改数据集的命令，在后台进程执行完毕之后，==master将传送整个数据文件到slave，并完成一次完全同步。==
+
+==全量复制==：当slave服务在接收到数据库文件数据后，将其存盘并加载到内存中。
+
+==增量复制==：Master继续将新的所有收集到的修改命令依次传给slave，完成同步！
+
+但是只要是重新连接master，一次完全同步（全量复制）将被自动执行！我们的数据一定可以在从机中看到！
+
+
+
+
+
+~~~bash
+slaveof host port #配置从机命令
+127.0.0.1:6380> SLAVEOF 127.0.0.1 6379
+OK
+127.0.0.1:6380> INFO replication
+# Replication
+role:slave
+master_host:127.0.0.1
+master_port:6379
+master_link_status:up
+master_last_io_seconds_ago:8
+master_sync_in_progress:0
+slave_repl_offset:0
+slave_priority:100
+slave_read_only:1
+connected_slaves:0
+master_replid:7a8434fef68c9b29113bf6350602ced204904e35
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:0
+127.0.0.1:6380> 
+
+127.0.0.1:6379> info replication
+# Replication
+role:master
+connected_slaves:1
+slave0:ip=127.0.0.1,port=6380,state=online,offset=154,lag=0
+master_replid:7a8434fef68c9b29113bf6350602ced204904e35
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:154
+second_repl_offset:-1
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:1
+repl_backlog_histlen:154
+127.0.0.1:6379> 
+
+
+
+
+
+# 启动三个redis服务
+[root@unclerayslove bin]# ./redis-cli -p 6379
+127.0.0.1:6379> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:5986c73365940f37424a3930da088d9e820de0ae
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+127.0.0.1:6379> 
+###########################################################
+
+[root@unclerayslove bin]# ./redis-cli -p 6380
+127.0.0.1:6380> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:b5326fafcfd12c74b9644768b58549dfe5be527f
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+127.0.0.1:6380> 
+###########################################################
+
+[root@unclerayslove bin]# ./redis-cli -p 6381
+127.0.0.1:6381> info replication
+# Replication
+role:master
+connected_slaves:0
+master_replid:b5766023ef5668e9bb3b27a8a2204a1e1e69a167
+master_replid2:0000000000000000000000000000000000000000
+master_repl_offset:0
+second_repl_offset:-1
+repl_backlog_active:0
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:0
+repl_backlog_histlen:0
+127.0.0.1:6381> 
+~~~
+
+
+
+
 
 
 
