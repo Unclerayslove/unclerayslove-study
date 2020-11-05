@@ -1512,6 +1512,44 @@ repl_backlog_histlen:0
 
 
 
+> 如果没有老大了，这个时候能不能选择一个老大出来呢？？手动！！！
+
+谋朝篡位
+
+如果主机断开了连接，我们可以使用`SLAVEOF no one`让自己变成主机！其他的节点就可以手动连接到最新的这个主节点（手动）！如果这个时候老大修复了，那就重新连接！！
+
+
+
+## 哨兵模式（sentinel）
+
+（自动选举老大的模式）
+
+> 概述
+
+
+
+哨兵模式是一种特殊的模式。首先Redistribution提供了哨兵的命令，哨兵是一个独立的进程，作为进程，它会独立运行。其原理是**哨兵通过发送命令，等待Redis服务器响应，从而监控运行的多个Redis实例**
+
+<img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1604597917602&amp;di=87a2fe72e436cf63735ef36553a1be52&amp;imgtype=0&amp;src=http%3A%2F%2Fwww.lanxinbase.com%2Fwp-content%2Fuploads%2F2020%2F04%2F001.png" alt="img"  />
+
+
+
+1、配置哨兵配置文件sentinel.conf
+
+~~~bash
+# sentinel monitor 被监控的名称 host port 1
+sentinel monitor myredis 127.0.0.1 6379 1
+~~~
+
+后面的这个数字1，代表主机挂了，slave投票看让谁接替成为主机，票数最多的，就会成为主机！
+
+~~~bash
+# 启动哨兵
+redis-sentinel config/sentinel.conf
+~~~
+
+
+
 
 
 
