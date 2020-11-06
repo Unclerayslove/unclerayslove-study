@@ -1230,13 +1230,26 @@ Redis客户端可以订阅任意数量的频道。
 
 ------
 
-<img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1604509069225&amp;di=6539d0896b840d60b4a58fa4f22199ac&amp;imgtype=0&amp;src=http%3A%2F%2Fimage.bubuko.com%2Finfo%2F201809%2F20180926231933462880.png" alt="img" style="zoom:150%;" />
+下图展示了频道 channel1 ， 以及订阅这个频道的三个客户端 —— client2 、 client5 和 client1 之间的关系：
+
+<img src="https://img-blog.csdnimg.cn/20200924215943362.png#pic_center" alt="在这里插入图片描述" style="zoom:150%;" />
+
+当有新消息通过 PUBLISH 命令发送给频道 channel1 时，这个消息就会被发送给订阅它的三个客户端：
+
+<img src="https://img-blog.csdnimg.cn/20200924215952210.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpc2VuMDEwNzAxMDc=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述" style="zoom:150%;" />
 
 ------
 
 > 命令
 
-<img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1604509352848&amp;di=75c446e85eddd3af5c027d64c64076f3&amp;imgtype=0&amp;src=http%3A%2F%2Fimg-blog.csdnimg.cn%2F20201006154504330.png%3Fx-oss-process%3Dimage%2Fwatermark%2Ctype_ZmFuZ3poZW5naGVpdGk%2Cshadow_10%2Ctext_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2wyNDcwMzM0NDkz%2Csize_16%2Ccolor_FFFFFF%2Ct_70%23pic_cente" alt="img" style="zoom:150%;" />
+| 命令                                   | 描述                               |
+| -------------------------------------- | ---------------------------------- |
+| PSUBSCRIBE pattern [pattern…]          | 订阅一个或多个符合给定模式的频道。 |
+| PUNSUBSCRIBE pattern [pattern…]        | 退订一个或多个符合给定模式的频道。 |
+| PUBSUB subcommand [argument[argument]] | 查看订阅与发布系统状态。           |
+| PUBLISH channel message                | 向指定频道发布消息                 |
+| SUBSCRIBE channel [channel…]           | 订阅给定的一个或多个频道。         |
+| UNSUBSCRIBE channel [channel…]         | 退订一个或多个频道                 |
 
 ------
 
@@ -1530,7 +1543,7 @@ repl_backlog_histlen:0
 
 哨兵模式是一种特殊的模式。首先Redistribution提供了哨兵的命令，哨兵是一个独立的进程，作为进程，它会独立运行。其原理是**哨兵通过发送命令，等待Redis服务器响应，从而监控运行的多个Redis实例**
 
-<img src="https://timgsa.baidu.com/timg?image&amp;quality=80&amp;size=b9999_10000&amp;sec=1604597917602&amp;di=87a2fe72e436cf63735ef36553a1be52&amp;imgtype=0&amp;src=http%3A%2F%2Fwww.lanxinbase.com%2Fwp-content%2Fuploads%2F2020%2F04%2F001.png" alt="img"  />
+<img src="https://github.com/Atomy5011/blog-picture/blob/master/%E7%8B%82%E7%A5%9E%E8%AF%B4Redis%E7%AC%94%E8%AE%B008.jpg?raw=true" alt="img" style="zoom:150%;" />
 
 
 
