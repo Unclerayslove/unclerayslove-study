@@ -1,31 +1,27 @@
-
-
-
-
-NoSQL：not only SQL
+NoSQL：Not only SQL
 
 # NoSQL的四大分类：
 
-**KV键值对：**
+## KV键值对
 
 - 新浪：Redis
 
 - 美团：Redis+Tair
 - 阿里、百度：Redistribution+memecache
 
-**文档型数据库（bson格式和json一样）：**
+## 文档型数据库（bson格式和json一样）
 
 - MongoDB（一般必须要掌握）
   - 基本分布式文件存储的数据库，C++编写，主要用来处理大量的文档
   - 介于关系型数据库和非关系型数据中间的产品。MongoDB是非关系型数据库中功能最丰富，最像关系型数据库的！
 - ConyhDB
 
-**列存储数据库：**
+## 列存储数据库
 
 - HBase
 - 分布式文件系统
 
-**图关系数据库：**
+## 图关系数据库
 
 - 他不是存图形的，放的是关系。比图：朋友圈社交网络、广告推荐！
 - Neo4j，InfoGrid
@@ -110,7 +106,6 @@ make install（确认安装）
 cd /usr/local/bin
 redis-server myconfig/redis.conf #通过指定的配置文件启动服务
 
-
 ~~~
 
 9、使用redis-cli进行连接测试
@@ -129,6 +124,7 @@ ps -ef | grep redis
 
 ~~~bash
  #在连接客户端的情况下，shutdown，然后exit推出
+ #或者通过ps -ef|grep redis 查看进程端口号， 用kill -9 进程pid
 ~~~
 
 
@@ -152,7 +148,7 @@ redis-benchmark -h 127.0.0.1 -p 6379 -c 50 -n 10000
 
 redis默认有16个数据库
 
-0-15
+index 0-15
 
 select index 切换数据库
 
@@ -168,7 +164,7 @@ dbsize 查看数据库大小
 
 Redis是很快的，官方表示，Redis是基于内存操作，CPU不是Redis性能瓶颈。Redis的瓶颈是根据机器的内存和网络带宽，既然可以使用单线程来实现，就使用单线程了
 
-Redis是C语言写的，官方提供的数据为：100000+的QPS，这个不必Memecache差
+Redis是C语言写的，官方提供的数据为：100_000+的QPS，这个不必Memecache差
 
 Redis为什么单线程还这么快？
 
@@ -178,7 +174,7 @@ Redis为什么单线程还这么快？
 
 CPU > 内存 > 硬盘的速度要有所了解
 
-核心：redis是将所有的数据全部放在内存中的，所以说使用单线程去操作效率就是高的，多线程（CPU上下文会切换：耗时的操作！！！），对于内存系统来说，如果没有上下文切换效率就是最高的！ 多次读写都是在一个CPU上的，在内存情况下，这个就是最佳的方案
+核心：redis是将所有的数据全部放在==内存==中的，所以说使用单线程去操作效率就是高的，多线程（CPU上下文会切换：耗时的操作！！！），对于内存系统来说，如果没有上下文切换效率就是最高的！ 多次读写都是在一个CPU上的，在内存情况下，这个就是最佳的方案
 
 
 
@@ -270,18 +266,6 @@ String类似的使用场景：value除了是我们的字符串还可以是我们
 - 粉丝数
 - 对象缓存存储
 
-
-
-incr key
-
-decr key
-
-incr key number
-
-decr key number
-
-getrange key start end  
-
 ## List
 
 基本的数据类型，列表
@@ -371,7 +355,7 @@ smove source destination member	#将一个指定的值，移动到另外一个se
  - 交集
  - 并集
  
-sdiff key [key ...]		#差集
+sdiff key [key ...]		#差集 A与B的差集：A-B   B与A的差集：B-A
 
 sinter key [key ...]	#交集	共同好友就可以这样实现
 
