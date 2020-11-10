@@ -523,8 +523,6 @@ PFMERGE destkey sourcekey [sourcekey ...]
 
 
 
-
-
 ## bitmaps
 
 > 位存储   存储 0 1
@@ -797,7 +795,7 @@ SpringData也是和SpringBoot齐名的项目！
 
 jedis：采用的直连，多个线程操作的话，是不安全的，如果想要避免不安全的，使用jedis pool连接池！！！更像BIO模式，是同步阻塞的
 
-lettuce：底层采用netty，实例可以在多个线程中进行共享，不存在线程不安全的情况！可以减少线程数量了，更像NIO模式，是同步非阻塞的
+lettuce：底层采用netty，实例可以在多个线程中进行共享，不存在线程不安全的情况！可以减少线程数量了，更像NIO模式，是同步非阻塞的（多路复用）
 
 ## 源码分析
 
