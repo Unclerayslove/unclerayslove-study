@@ -75,17 +75,28 @@ Windows下使用简单，但Redis推荐我们使用Linux去开发使用
 
 ## Linux安装
 
-1、下载安装包！`redis-6.0.8.tar.gz`
+1、下载安装包！`redis-5.0.8.tar.gz`
 
 2、上传到远程服务器（比如一般是/home目录下）；可以选择mv到/opt目录下（临时文件）解压Redis的安装包
 
+```bash
+/home/user【用户名】   
+```
+
 3、进入解压后的文件，可以看到Redis的配置文件
+
+```bash
+cd redis-5.0.8
+# 有标准的配置文件redis.conf 以及其他文件
+# 解压之后只是一个程序，没有redis-server rdis-cli 需要安装后才有
+```
 
 4、基本的环境安装
 
 ~~~bash
-yum install gcc-c++
+yum install gcc-c++（有gcc就不用安装）
 
+# 
 make
 make install（确认安装）
 ~~~
@@ -123,8 +134,9 @@ ps -ef | grep redis
 11、如何关闭Redis服务呢？`shutdown`
 
 ~~~bash
- #在连接客户端的情况下，shutdown，然后exit推出
- #或者通过ps -ef|grep redis 查看进程端口号， 用kill -9 进程pid
+ # redis-cli shutdown
+ # 在连接客户端的情况下，shutdown，然后exit推出
+ # 或者通过ps -ef|grep redis 查看进程端口号， 用kill -9 进程pid
 ~~~
 
 
@@ -950,7 +962,7 @@ public class RedisConfig {
 > 网络 NETWORK
 
 ~~~bash
-bind 127.0.0.1		#绑定IP
+bind 127.0.0.1		#绑定IP   如果其他服务器想要访问，则bind 对应服务器的ip
 protected-mode yes	#保护模式
 port 6379			#端口
 ~~~
