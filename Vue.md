@@ -86,7 +86,7 @@ View   ViewModel Model  数据双向绑定
 - Model：模型层，在这里表示JavaScript对象
 
 - View：视图层，在这里表示DOM（HTML操作的元素）
-- ViewModel：连接视图和数据的中间件，Vue.js就是MVVM中的ViewModel层的实现者
+- ==ViewModel==：连接视图和数据的中间件，Vue.js就是MVVM中的ViewModel层的实现者
 
 在MVVM架构中，是不允许 数据 和视图 直接通信的，只能通过ViewModel来通信，而ViewModel就是定义了一个Observer观察者
 
@@ -94,6 +94,37 @@ View   ViewModel Model  数据双向绑定
 - ViewModel能够监听到视图的变化，并能够通知数据发生改变
 
 至此，我们就明白了，Vue.js就是一个MVVM的实现者，它的核心就是实现了DOM==监听与数据绑定==
+
+
+
+工具：IDEA下载Vue插件
+
+vue在线cdn
+
+```xml
+ <script src="https://cdn.jsdelivr.net/npm/vue@2.5.21/dist/vue.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/vue@2.5.21/dist/vue.min.js"></script>
+```
+
+v-on:click="方法名"——点击事件
+
+
+
+## 双向数据绑定
+
+### v-model 双向数据绑定
+
+在表单中可以使用v-model进行双向数据绑定
+
+### Vue组件
+
+
+
+
+
+
+
+
 
 
 
