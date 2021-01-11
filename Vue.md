@@ -110,23 +110,68 @@ v-on:click="方法名"——点击事件
 
 
 
-## 双向数据绑定
+## Vue：表单双绑、组件
 
-### v-model 双向数据绑定
+### 什么是双向数据绑定
 
-在表单中可以使用v-model进行双向数据绑定
+Vue.js是一个MVVM框架，即数据双向绑定，即当数据发生变化的时候，视图也就发生变化，当视图发生变化的时候，数据也会跟着同步变化。这也算是Vue.js的精髓之处了。
+
+值得注意的是，我们所说的数据双向绑定，一定是对于UI控件来说的，非UI控件不会涉及到数据双向绑定。
+
+
+
+### 在表单中使用双向数据绑定
+
+在表单中可以使用v-model进行双向数据绑定，在<input>、<textarea>、<select>等元素上创建双向数据绑定。
 
 ### Vue组件
 
+```js
+// 定义一个组件【就是一个模板】
+Vue.component("uncle", {
+    props: ['item'],//如果不用props，就取不到外面的item值
+    template: '<li>{{item}}</li>'
+});
+```
 
 
 
+## Vue：Axios异步通信
+
+### 什么是Axios
+
+Axios是一个开源的可以用在浏览器端和NodeJS的异步通信框架，它的主要作用就是实现AJAX异步通信，其功能特点如下：
+
+- 从浏览器中创建`XMLHttpRequests`
+- 从node.js创建http请求
+- 支持Promise API 【JS中链式编程】
+- 拦截请求和响应
+- 转换请求数据和响应数据
+- 取消请求
+- 自动转换JSON数据
+- 客户端支持防御XSRF（跨站请求伪造）
+
+GitHub：https://github.com/axios/axios
+
+中文文档：http://www.axios-js.com/
+
+### 为什么要使用Axios
+
+由于Vue.js是一个视图层框架并且作者（尤雨溪）严格准守SoC(关注度分离原则)，所以Vue.js并不包含AJAX的通信功能，为了解决通信问题，作者单独开发了一个名为vue-resource的插件，不过在进入2.0版本以后停止了对该插件的维护并推荐了Axios框架。少用jQuery,因为它操作Dom太频繁！
+
+在线cdn
+
+~~~html
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+~~~
 
 
 
+## 计算属性
 
+计算出来的结果，保存在属性中。
 
-
+计算就是个函数，简单点说，它就是一个能够将计算结果缓存起来的属性（将行为转化成了静态的属性），仅此而已；可以想象为==缓存==
 
 
 
