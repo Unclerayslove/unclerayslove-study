@@ -175,9 +175,53 @@ GitHub：https://github.com/axios/axios
 
 
 
+## slot插槽
 
 
 
+## vue-cli
+
+vue-cli是官方提供的一个脚手架，用于快速生成一个vue的项目模板
+
+### 需要环境
+
+Node.js：http://nodejs.cn/download/
+
+电脑安装-下一步 安装在自己的环境目录下
+
+node -v
+
+npm -v
+
+这个npm，就是一个软件包管理工具，就和linux下的apt软件安装差不多
+
+安装Node.js淘宝镜像加速器（cnpm）
+
+这样子的话，下载会快很多
+
+~~~bash
+# -g 就是全局安装
+npm install cnpm -g
+
+# 或使用如下语句解决 npm 速度慢的问题
+npm install --registry=https://registry.npm.taobao.org
+~~~
+
+安装过程可能有点慢~耐心等待。虽然安装了cnpm 但是尽量少用
+
+
+
+最好启用cmd管理员
+
+安装vue-cli
+
+~~~bash
+cnpm install vue-cli -g
+
+# 测试是否安装成功
+# 查看可以基于哪些模板创建vue 应用程序 ，通常我们选择webpack
+vue list
+~~~
 
 
 
