@@ -223,9 +223,76 @@ cnpm install vue-cli -g
 vue list
 ~~~
 
+安装webpack
+
+~~~bash
+npm install webpack -g
+npm install webpack-cli -g
+
+#测试成功
+webpack -v
+webpack-cli -v
+~~~
 
 
 
 
 
+
+
+### 第一个vue-cli应用程序
+
+1、创建一个Vue项目，我们随便建立一个空的文件夹在电脑上，比如在D盘下新建一个目录
+
+`D:\Project\vue-study`
+
+2、创建一个基于webpack模板的vue应用程序
+
+~~~bash
+# 这里的 myvue 是项目名称，可以根据自己的需求起名
+vue init webpack myvue
+
+~~~
+
+一路都选择no即可；原因是可以自己手动去设置一些东西【熟悉过程和结构】
+
+**初始化并运行**
+
+~~~bash
+cd myvue
+npm install
+npm run dev
+~~~
+
+
+
+说明：
+
+
+
+## 创建工程-结合element-ui
+
+~~~bash
+# 这里的 myvue 是项目名称，可以根据自己的需求起名
+vue init webpack myvue
+一路都选择no即可；原因是可以自己手动去设置一些东西【熟悉过程和结构】
+
+#进入到工程目录
+cd myvue
+
+# 安装 vue-router
+npm install vue-router --save-dev
+
+#安装 element-ui
+npm i element-ui -S
+
+#安装依赖
+npm install
+
+# 安装SASS加载器
+cnpm install sass-loader node-sass --sava-dev
+
+# 启动测试
+npm run dev
+~~~
 
