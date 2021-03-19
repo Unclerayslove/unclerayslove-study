@@ -226,6 +226,7 @@ vue list
 安装webpack
 
 ~~~bash
+# 这两个同事都要安装，webpack的客户端cli
 npm install webpack -g
 npm install webpack-cli -g
 
@@ -252,6 +253,30 @@ webpack-cli -v
 # 这里的 myvue 是项目名称，可以根据自己的需求起名
 vue init webpack myvue
 
+F:\UncleRayslove\MyGitHub\my_vue_study>vue init webpack myvue
+
+? Project name myvue
+? Project description A Vue.js project
+? Author leipei <leipei@ebupt.com>
+? Vue build standalone
+? Install vue-router? No
+? Use ESLint to lint your code? No
+? Set up unit tests No
+? Setup e2e tests with Nightwatch? No
+? Should we run `npm install` for you after the project has been created? (recommended) no
+
+   vue-cli · Generated "myvue".
+
+# Project initialization finished!
+# ========================
+
+To get started:
+
+  cd myvue
+  npm install (or if using yarn: yarn)
+  npm run dev
+
+Documentation can be found at https://vuejs-templates.github.io/webpack
 ~~~
 
 一路都选择no即可；原因是可以自己手动去设置一些东西【熟悉过程和结构】
@@ -260,7 +285,18 @@ vue init webpack myvue
 
 ~~~bash
 cd myvue
+
 npm install
+# install之后，提示可能需要修复，按提示输入命令修复即可
+added 1268 packages from 675 contributors and audited 1275 packages in 256.849s
+
+42 packages are looking for funding
+  run `npm fund` for details
+
+found 17 vulnerabilities (3 low, 8 moderate, 6 high)
+  run `npm audit fix` to fix them, or `npm audit` for details
+  
+# 启动测试
 npm run dev
 ~~~
 
