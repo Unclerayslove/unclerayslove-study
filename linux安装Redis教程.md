@@ -11,6 +11,7 @@
 3、进入解压后的文件，可以看到Redis的配置文件
 
 ```bash
+tar -zvxf redis-5.0.8.tar.gz
 cd redis-5.0.8
 # 有标准的配置文件redis.conf 以及其他文件
 # 解压之后只是一个程序，没有redis-server rdis-cli 需要安装后才有
