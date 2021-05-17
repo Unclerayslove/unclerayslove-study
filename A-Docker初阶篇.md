@@ -1332,12 +1332,18 @@ ADD				# 拷贝压缩文件+解压缩----将宿主机目录下的文件拷贝进
 COPY			# 类似ADD命令，将我们的文件和目录拷贝到镜像中----只是拷贝 COPY src dest 或者 COPY ["src","dest"]。将从构建上下文目录中<源路径>的文件/目录复制到新的一层镜像内的<目标路径>位置
 WORKDIR			# 指定在创建容器后，终端默认登录进来的工作目录
 VOLUME			# 挂载的目录----容器数据卷
-EXPOSE			# 保留端口配置
-CMD				# COMMAND 指定这个容器启动的时候要运行的命令----可以有多个CMD指令，但是只有最后一个会生效，CMD会被docker run之后的参数替代
-ENTRYPOINT		# 指定这个容器启动的时候要运行的命令----可以追加命令
+EXPOSE			# 保留端口配置。EXPOSE命令只是声明了容器应该打开的端口并没有实际上将它打开!
+CMD				# 【容器启动时执行】COMMAND 指定这个容器启动的时候要运行的命令----可以有多个CMD指令，但是只有最后一个会生效，CMD会被docker run之后的参数替代
+ENTRYPOINT		# 【容器启动时执行】指定这个容器启动的时候要运行的命令----可以追加命令
 ONBUILD			# 当构建一个被继承Dockerfile 这个时候就会运行 ONBUILD的指令 触发指令
 
 ~~~
+
+EXPOSE：EXPOSE在dockerfile中暴露出容器将要提供服务所开放的端口。run的时候直接 docker run -d --net=host  image:tag 这样可以不手动-p指定端口映射关系，更简洁了，从而使EXPOSE发挥最大的作用。而不是简单的随机映射宿主机&&起到注释作用。
+
+而这么做不灵活点在于宿主机的端口被EXPOSE固定。如果宿主机端口被其他进程占用，就port already in use了。
+
+
 
 
 
@@ -1363,8 +1369,6 @@ WORKDIR $MYPATH
 
 CMD /bin/bash
 ~~~
-
-
 
 
 
@@ -2216,7 +2220,7 @@ PING tomcat-net-02 (192.168.0.3) 56(84) bytes of data.
 
 ~~~
 
-我们自定义的网络docker都已经帮我们维护好了对应的关系，推荐我们平时这样使用网络
+==我们自定义的网络docker都已经帮我们维护好了对应的关系，推荐我们平时这样使用网络==
 
 好处： 如redis集群  MySQL集群
 
@@ -2225,6 +2229,10 @@ PING tomcat-net-02 (192.168.0.3) 56(84) bytes of data.
 
 
 ## 网络连通
+
+将使用不同网络的容器，连接到另一个网络上，这样两个容器之间就打通了
+
+如 A容器是docker0默认网络，B容器是自定义网络mynet，此时A容器是不能访问（ping不通）B容器的；但是当我们通过命令：docker network connect mynet A容器后，等于连接了A容器到mynet网络下，这时两个容器就能根据服务名ping通了【相互ping通】。
 
 ![image-20210516221548528](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210516221550.png)
 
@@ -2269,13 +2277,21 @@ mkdir -p /mydata/redis/node-${port}/conf
 touch /mydata/redis/node-${port}/conf/redis.conf
 cat << EOF >> /mydata/redis/node-${port}/conf/redis.conf
 port 6379
+# 绑定ip， 因为保护模式protected-mode yes 是默认开启得
 bind 0.0.0.0
+# 开启集群模式
 cluster-enabled yes
+# 集群节点信息配置文件
 cluster-config-file nodes.conf
+# 集群节点 连接超时时间
 cluster-node-timeout 5000
+# 集群节点 IP，填写宿主机的 IP
 cluster-announce-ip 172.38.0.1${port}
+# 集群节点映射端口
 cluster-announce-port 6379
+# 集群节点总线端口
 cluster-announce-bus-port 16379
+# 开启AOF持久化模式
 appendonly yes
 EOF
 done
@@ -2374,9 +2390,114 @@ docker搭建redis集群完成！！
 
 3、编写Dockerfile
 
+打包SpringBoot很方便，直接打成一个可执行jar，因此只需要一个jdk的环境即可。将打包的jar和config一级lib等拷贝到同一目录下，并在这个目录下编写Dockerfile文件
+
+~~~dockerfile
+## 1、基础的方式
+FROM java:8
+COPY *.jar /app.jar		#拷贝 并重新命名
+COPY config/ /config/
+COPY lib/ /lib/
+EXPOSE 8024
+CMD ["--server.port=8024"]	#启动容器时会追加在ENTRYPOINT后面
+ENTRYPOINT ["java","-jar","app.jar"]
+
+
+# 将所有文件放在同一目录下，比如/home目录，为了在启动容器时能java -jar能找这些文件，所以需要配置工作目录WORKDIR，在容器启动时，就会进入到这个目录
+## 2、将文件拷贝到容器内指定目录，并配置工作目录即可
+FROM java:8
+COPY *.jar /home/app.jar
+COPY config/ /home/config/
+COPY lib/ /home/lib/
+EXPOSE 8024
+WORKDIR /home
+CMD ["--server.port=8024"]
+ENTRYPOINT ["java","-jar","app.jar"]
+
+
+## 3、添加VOLUME，这种方式是匿名挂载【通过docker inspect 容器id可查看】其效果是在主机 /var/lib/docker/volumes 目录下创建了一个临时文件，并链接到容器的/home/otis/config
+FROM java:8
+COPY *.jar /home/otis/app.jar
+COPY config/ /home/otis/config/
+COPY lib/ /home/otis/lib/
+EXPOSE 8024
+WORKDIR /home/otis
+# 通过 VOLUME 指令创建的挂载点，无法指定主机上对应的目录，是自动生成的。因此这个挂载路径是容器内的路径
+VOLUME ["/home/otis/config","/home/otis/lib","/home/otis/logs"]
+
+CMD ["--server.port=8024"]
+ENTRYPOINT ["java","-jar","app.jar"]
+
+
+
+## 4、如果要明确挂载路径，则通过在启动容器时 -v 进行路径挂载
+docker run -d -p 8024:8024 -v /home/omc/omc-backend/docker-otis/logs:/home/otis/logs
+
+~~~
+
+对于 CMD 和 ENTRYPOINT 的设计而言，多数情况下它们应该是单独使用的。当然，有一个例外是 CMD 为 ENTRYPOINT 提供默认的可选参数。
+
+- 如果 ENTRYPOINT 使用了 shell 模式，CMD 指令会被忽略。
+- 如果 ENTRYPOINT 使用了 exec 模式，CMD 指定的内容被追加为 ENTRYPOINT 指定命令的参数。
+- 如果 ENTRYPOINT 使用了 exec 模式，CMD 也应该使用 exec 模式。
+
+![CMD&ENTRYPOINT](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210517113304.png)
+
+ENTRYPOINT和CMD同时存在时, docker把CMD的命令拼接到ENTRYPOINT命令之后
+
+
+
 4、构建镜像
 
+~~~shell
+# 1.复制jar和Dockerfile到服务器
+# 2.构建镜像
+docker build -t xxxxx:xx  .
+~~~
+
+
+
 5、发布运行
+
+
+
+IDEA直连Docker
+
+1、IDEA下载Docker插件【一般这个插件会默认下载】
+
+2、修改服务器的docker配置
+
+~~~shell
+## 1、修改docker服务文件
+vi  /lib/systemd/system/docker.service
+
+# 2、在 ExecStart 开头的这一行末尾添加 -H tcp://0.0.0.0:2375
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock -H tcp://0.0.0.0:2375
+
+## 这种方式也可以。 将原来的ExecStart前面加上#号注释掉，然后再下面追加一行
+ExecStart=/usr/bin/dockerd    -H tcp://0.0.0.0:2375    -H unix:///var/run/docker.sock
+ 
+## 3、重新加载配置
+systemctl daemon-reload 
+## 重启docker服务
+systemctl restart docker.service
+## 可以合并成一个执行
+systemctl daemon-reload && systemctl restart docker
+
+## 4、如果没有关闭防火墙，则需要开放端口
+firewall-cmd --zone=public --add-port=2375/tcp --permanent
+
+~~~
+
+3、在IDEA中连接Docker。在Services中配置，点击+ 连接Dockers Connection，Name：取一个名字，TCP socket：输入安装docker的服务器ip，完成点击ok即有左侧Docker的服务了。
+
+![img](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210517180334.png)
+
+
+
+Docker 配置的三种方式
+
+![image-20210517181455798](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210517181457.png)
 
 
 
