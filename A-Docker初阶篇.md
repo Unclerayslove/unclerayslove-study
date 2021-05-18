@@ -1,6 +1,6 @@
-Docker安装
+# 基本介绍
 
-分析
+分析：
 
 JavaEE	Java	SringMVC/SpringBoot/Mybatis
 
@@ -2267,10 +2267,14 @@ PING tomcat-net-01 (192.168.0.2) 56(84) bytes of data.
 ![image-20210516222747699](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210516222749.png)
 
 ~~~shell
-#创建一个redis网络
-docker network create redis --subnet 172.38.0.0/16
+#1、创建一个redis网卡
+docker network create --subnet 172.38.0.0/16 redis
+--subnet #表示网段的子网，  /16 表示有16位为网络号 16位为主机号
+A类	0		0-127
+B类	10		128-191
+C类	110		192-223
 
-# shell脚本 创建六个redis配置,  直接复制到Linux窗口 执行即可
+# 2、shell脚本 创建六个redis配置,  直接复制到Linux窗口 执行即可
 for port in $(seq 1 6);\
 do \
 mkdir -p /mydata/redis/node-${port}/conf
@@ -2296,7 +2300,8 @@ appendonly yes
 EOF
 done
 
-# 启动redis
+
+# 3、启动redis
 docker run -d -p 6371:6379 -p 16371:16379 --name redis-1 -v /mydata/redis/node-1/data:/data -v /mydata/redis/node-1/conf/redis.conf:/etc/redis/redis.conf --net redis --ip 172.38.0.11 redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
 
 docker run -d -p 6372:6379 -p 16372:16379 --name redis-2 -v /mydata/redis/node-2/data:/data -v /mydata/redis/node-2/conf/redis.conf:/etc/redis/redis.conf --net redis --ip 172.38.0.12 redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
@@ -2309,24 +2314,28 @@ docker run -d -p 6375:6379 -p 16375:16379 --name redis-5 -v /mydata/redis/node-5
 
 docker run -d -p 6376:6379 -p 16376:16379 --name redis-6 -v /mydata/redis/node-6/data:/data -v /mydata/redis/node-6/conf/redis.conf:/etc/redis/redis.conf --net redis --ip 172.38.0.16 redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
 
-# 通过脚本运行六个redis
+## 或者通过脚本运行六个redis
 for port in $(seq 1 6);\
-docker run -p 637${port}:6379 -p 1637${port}:16379 --name redis-${port} \
+do \
+docker run -d -p 637${port}:6379 -p 1637${port}:16379 --name redis-${port} \
 -v /mydata/redis/node-${port}/data:/data \
 -v /mydata/redis/node-${port}/conf/redis.conf:/etc/redis/redis.conf \
--d --net redis --ip 172.38.0.1${port} redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
+--net redis --ip 172.38.0.1${port} redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
+done
 
-# 进入到redis-1客户端
+## 6个redis启动成功后，则开始搭建集群
+# 4、进入到redis-1容器内
 docker exec -it redis-1 /bin/sh #redis默认没有bash
-redis-cli --cluster create 172.38.0.11:6379 172.38.0.12:6379 172.38.0.13:6379 172.38.0.14:6379 172.38.0.15:6379 172.38.0.16:6379  --cluster-replicas 1
+## 通过redis-cli --cluster 命令创建集群
+/data # redis-cli --cluster create 172.38.0.11:6379 172.38.0.12:6379 172.38.0.13:6379 172.38.0.14:6379 172.38.0.15:6379 172.38.0.16:6379  --cluster-replicas 1
+	--cluster-replicas <arg>      #从节点个数
 
-# 创建集群
-/data # redis-cli --cluster create 172.38.0.11:6379 172.38.0.12:6379 172.38.0.13:6379 172.38.0.14:6379 172.38.0.15:6379 172.38.0.16:6379 --cluster-replic
-as 1
+## Redis Cluster 在5.0之后取消了ruby脚本 redis-trib.rb的支持（手动命令行添加集群的方式不变），集合到redis-cli里，避免了再安装ruby的相关环境。直接使用redis-clit的参数--cluster 来取代。为方便自己后面查询就说明下如何使用该命令进行Cluster的创建和管理，关于Cluster的相关说明可以查看官网或则Redis Cluster部署、管理和测试。
+
 >>> Performing hash slots allocation on 6 nodes...
-Master[0] -> Slots 0 - 5460
-Master[1] -> Slots 5461 - 10922
-Master[2] -> Slots 10923 - 16383
+Master[0] -> Slots 0 - 5460			#哈希槽 slot
+Master[1] -> Slots 5461 - 10922		#哈希槽
+Master[2] -> Slots 10923 - 16383	#哈希槽
 Adding replica 172.38.0.15:6379 to 172.38.0.11:6379
 Adding replica 172.38.0.16:6379 to 172.38.0.12:6379
 Adding replica 172.38.0.14:6379 to 172.38.0.13:6379
@@ -2372,13 +2381,41 @@ S: 570fcb41b358d8198d8a5768eee1c27f9b07b17c 172.38.0.14:6379
 >>> Check slots coverage...
 [OK] All 16384 slots covered.
 
-
+## 进入reids客户端   -c 集群模式进入
+redis-cli -c
+cluster-nodes	#查看集群节点信息
 
 ~~~
 
 docker搭建redis集群完成！！
 
 ![image-20210516231622953](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210516231624.png)
+
+
+
+集群节点信息解释：
+
+![image-20210518112717128](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210518112719.png)
+
+1、id：节点 ID，一个40个字符的随机字符串，当一个节点被创建时不会再发生变化（除非使用CLUSTER RESET HARD）。
+
+2、ip:port：客户端与节点通信使用的地址
+
+3、flags：逗号列表分隔的标志：myself，master，slave，fail?，fail，handshake，noaddr，noflags等
+
+4、master：如果节点是slave，并且已知master节点，则这里列出master节点ID,否则的话这里列出”-“。
+
+5、ping-sent：最近一次发送ping的时间，这个时间是一个unix毫秒时间戳，0代表没有发送过。
+
+6、pong-recv：最近一次收到pong的时间，使用unix时间戳表示。
+
+7、config-epoch：节点的epoch值（or of the current master if the node is a slave）。每当节点发生失败切换时，都会创建一个新的，独特的，递增的epoch。如果多个节点竞争同一个哈希槽时，epoch值更高的节点会抢夺到。
+
+8、link-state：node-to-node集群总线使用的链接的状态，我们使用这个链接与集群中其他节点进行通信.值可以是 connected 和 disconnected。
+
+9、slot：散列槽号或范围。哈希槽值或者一个哈希槽范围. 从第9个参数开始，后面最多可能有16384个 数(limit never reached)。代表当前节点可以提供服务的所有哈希槽值。如果只是一个值,那就是只有一个槽会被使用。如果是一个范围，这个值表示为起始槽-结束槽，节点将处理包括起始槽和结束槽在内的所有哈希槽。
+
+
 
 
 
@@ -2498,6 +2535,75 @@ firewall-cmd --zone=public --add-port=2375/tcp --permanent
 Docker 配置的三种方式
 
 ![image-20210517181455798](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210517181457.png)
+
+Docker-Image配置
+
+![image-20210518163130544](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210518163132.png)
+
+Dockerfile的方式
+
+![image-20210518163637974](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210518163639.png)
+
+
+
+
+
+1、不配置Maven，需要自己先正常Maven打包，然后通过编写Dockerfile文件，进行创建镜像 和启动容器
+
+2、配置Maven【添加 docker-maven-plugin 插件依赖，进行相关配置】
+
+~~~xml
+
+<plugin>
+    <groupId>com.spotify</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>1.0.0</version>
+
+    <!--将插件绑定在某个phase执行-->
+    <executions>
+        <execution>
+            <id>build-image</id>
+            <!--将插件绑定在package这个phase上。也就是说，用户只需执行mvn package ，就会自动执行mvn docker:build-->
+            <phase>package</phase>
+            <goals>
+                <goal>build</goal>
+            </goals>
+        </execution>
+    </executions>
+
+    <configuration>
+        <!--指定生成的镜像名-->
+        <imageName>zdadmin/${project.artifactId}</imageName>
+        <!--指定标签-->
+        <imageTags>
+            <imageTag>latest</imageTag>
+        </imageTags>
+
+        <!-- 指定 Dockerfile 路径  ${project.basedir}：项目根路径下-->
+        <dockerDirectory>${project.basedir}</dockerDirectory>
+
+        <!--指定远程 docker api地址-->
+        <dockerHost>https://xxx.xxx.xxx.xxx:2376</dockerHost>
+
+        <!-- 这里是复制 war 包到 docker 容器指定目录配置 -->
+        <resources>
+            <resource>
+                <targetPath>/</targetPath>
+                <!--war 包所在的路径  此处配置的 即对应 target 目录-->
+                <directory>${project.build.directory}</directory>
+                <!-- 需要包含的 jar包 ，这里对应的是 Dockerfile中添加的文件名　-->
+                <include>${project.build.finalName}.war</include>
+            </resource>
+        </resources>
+
+        <!-- 以下两行是为了docker push到DockerHub使用的。 -->
+        <serverId>docker-hub</serverId>
+        <registryUrl>https://index.docker.io/v1</registryUrl>
+    </configuration>
+</plugin>
+~~~
+
+
 
 
 
