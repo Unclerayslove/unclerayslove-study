@@ -1,4 +1,37 @@
-# 基本介绍
+# Docker介绍与安装
+
+## Docker的历史
+
+2010年，几个搞IT的年轻人，在美国旧金山成立了一家名叫“dotCloud”的公司。这家公司主要提供基于PaaS的云计算技术服务。
+
+什么叫Pass的云计算服务呢？Linux里面有虚拟机，LXC （Linux Container容器，内核虚拟化技术）有关的容器技术。比如，在windows上要虚拟一个linux可以通过WMware，但是这种虚拟机有一个很大的问题：很笨重。还要模拟一些硬件。
+
+他们将自己的技术（容器化技术） 简化命名 这就是Docker
+
+Docker刚诞生的时候，没有引起行业的注意。这个时候他们要恰饭、恰饭、恰饭啊！！！但他们的dotCLoud是一家非常小的公司，为了活下去，他们就想到了一个词：开源！
+
+开放源代码
+
+2013年，Docker开源。越来越多的人发现了Docker的优点，所以就火了。开源之后，大概每个月Docker都会更新一个版本。
+
+2014年4月，Docker1.0发布！！！里程碑。到现在6年的时间，就成为一个主流，并且开发人员也要掌握的技术
+
+Docker为什么这么火？相对于我们传统的虚拟机来说，它十分的轻巧
+
+在容器技术出来之前，我们都是使用的虚拟机技术（比如VMware）
+
+虚拟机：在windows中装一个VMware，通过这个软件可以虚拟出来一个或多台电脑（就跟我们真实的物理机一样），十分的笨重！比如虚拟出来一个20G的虚拟机，但是如果我们只是跑一些基本的命令，这就大大的造成了浪费
+
+虚拟机也是属于虚拟化技术（虚拟出来的有硬件、软件），Docker容器技术（只需要相关的软件即可，并共用宿主机的内核），也是一种虚拟化技术（差别就在于 体量）
+
+- 原来下载 vmware  linux centos原生镜像（一个电脑）  如果要隔离的话，需要开启多个虚拟机  # 几个G或几十个G  分钟级启动
+- docker：隔离，用镜像（不是原生的电脑，只是一些最核心的环境 4m足矣  就是一些命令+开机启动等）如果需要其他的软件，加进去就是，比如jdk+mysql等 这样就十分的小巧了  运行镜像就可以了   # 几M或几十M 甚至KB 秒级启动
+
+Docker 是基于Go语言开发的！开源项目
+
+
+
+## Docker为什么会出现
 
 分析：
 
@@ -16,26 +49,65 @@ Docker的主要理念：Build，Ship and Run Any App，Anywhere。Linux容器技
 
 **Linux容器不是模拟一个完整的操作系统，而是对进程进行隔离。**不需要捆绑一整套操作系统
 
-
-
-安装前提条件：Docker运行在CentOS 7上，要求系统64位、系统内核版本为3.10以上【uname -r 查看系统内核版本】
-
-```shell
-# 查看系统内核版本
-uname -r
-3.10.0-862.el7.x86_64
-
-# 查看系统版本
-cat /etc/redhat-release
-CentOS Linux release 7.5.1804 (Core)
-
-```
-
-
-
 Docker的架构图
 
 ![基本组成](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210514161127.png)
+
+官网Docker的图片就是一只鲸鱼（Docker引擎）背上装了许多的集装箱（镜像）。Docker的思想就来自于集装箱（相互隔离）。
+
+例如：JRE（Java 运行环境） ----跑了多个应用（端口冲突，配置报错等等）----原来都是交叉的，一个项目都是用的一套环境
+
+而Docker是隔离的：隔离是Docker核心思想！打包装箱，每个箱子是互相隔离的。
+
+
+
+## Docker能干嘛
+
+虚拟机技术的缺点：
+
+1、资源占用十分多
+
+2、冗余步骤多（开机的过程也非常麻烦）
+
+3、启动很慢（开多个的话，电脑配置跟不上，就炸了！！！）
+
+
+
+容器化技术：
+
+**容器化技术不是模拟的一个完整的操作系统**
+
+
+
+比较Docker和虚拟机的不同：
+
+- 传统虚拟机，虚拟出一套硬件，运行一个完整的操作系统，然后在这个系统上安装和运行软件
+- 容器内的应用直接运行在 宿主机的内核中，容器是没有自己的内核的，也没有虚拟我们的硬件，所以就轻便了
+- 每个容器间是相互隔离，每个容器内都有一个属于自己的文件系统，互不影响。
+
+
+
+DevOps（开发、运维）
+
+1、更快速的交付和部署
+
+传统：一堆帮助文档，安装程序，再部署
+
+Docker：打包镜像发布测试，一键运行
+
+2、更便捷的升级和扩缩容
+
+使用了Docker之后，我们部署应用就和搭积木一样！（如果要升级了，就整个镜像给它升个级）
+
+项目打包为一个镜像，扩展 服务器A 需要再增加时 直接运行一个服务器B就可以了（一个镜像可以运行多个容器实例）
+
+3、更简单的系统运维
+
+在容器化之后，我们的开发，测试环境都是高度一致的。
+
+4、更高效的计算资源利用
+
+Docker是内核级别的虚拟化，可以在一个物理机上运行很多的容器实例！服务器的性能可以被压榨到极致
 
 
 
@@ -71,6 +143,20 @@ Docker Hub
 
 ## 安装Docker
 
+安装前提条件：Docker运行在CentOS 7上，要求系统64位、系统内核版本为3.10以上【uname -r 查看系统内核版本】
+
+~~~shell
+# 查看系统内核版本
+uname -r
+3.10.0-862.el7.x86_64
+
+# 查看系统版本
+cat /etc/redhat-release
+CentOS Linux release 7.5.1804 (Core)
+~~~
+
+安装：
+
 ```shell
 # 1、如果有旧的版本 先卸载
 yum remove docker \
@@ -85,13 +171,16 @@ yum remove docker \
 yum install -y yum-utils
 
 # 3、设置镜像的仓库
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo #默认是从国外的十分慢 这里改成国内的
+# 默认是从国外的十分慢 这里改成国内的
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
 # 推荐使用阿里云的 十分快
 yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
     
 # 4、安装docker相关的内容 docker-ce 社区版 ee是企业版 推荐使用ce
 # 这是安装最新的docker版本
 yum install docker-ce docker-ce-cli containerd.io  
+
 # 根据需要也可以安装指定的版本
 yum install docker-ce-<VERSION_STRING> docker-ce-cli-<VERSION_STRING> containerd.io
 
@@ -104,6 +193,16 @@ sudo systemctl enable docker
 systemctl status docker
 
 ```
+
+
+
+安装问题 yum 有问题
+
+vim /etc/yum/pluginconf.d/subscription-manager.conf ？？？？
+
+failure: repodata/repomd.xml from docker-ce-stable: [Errno 256] No more mirrors to try。docker配置有问题
+
+解决办法：https://blog.csdn.net/calledjoker/article/details/113556859
 
 
 
@@ -220,7 +319,7 @@ Hypervisor：**虚拟机监视器**，是用来建立与执行[虚拟机器](htt
 
 ```shell
 docker version      #显示docker的版本信息
-docker info			#显示docker的系统信息，包括镜像和容器的数量
+docker info			#显示docker的系统信息，包括镜像和容器的数量  容器运行的状态等
 docker 命令 --help   #万能帮助命令
 
 ```
@@ -773,23 +872,23 @@ docker cp xxx.tar.gz 启动的容器名:/路径
 
 
 
-~~~sh
+~~~shell
 Commands:
   attach      Attach local standard input, output, and error streams to a running container
-  build       Build an image from a Dockerfile
+  build       Build an image from a Dockerfile   # 根据Dockerfile文件构建一个镜像
   commit      Create a new image from a container's changes
-  cp          Copy files/folders between a container and the local filesystem
-  create      Create a new container
-  diff        Inspect changes to files or directories on a container's filesystem
-  events      Get real time events from the server
-  exec        Run a command in a running container
+  cp          Copy files/folders between a container and the local filesystem # 拷贝文件/文件夹
+  create      Create a new container  # 创建一个容器
+  diff        Inspect changes to files or directories on a container's filesystem # 检查对容器文件系统上的文件或目录所做的更改
+  events      Get real time events from the server		#从服务器获取实时事件
+  exec        Run a command in a running container		#在正在运行的容器中运行命令（常用命令，进入一个容器）
   export      Export a container's filesystem as a tar archive
   history     Show the history of an image
-  images      List images
+  images      List images	# 查看镜像列表
   import      Import the contents from a tarball to create a filesystem image
   info        Display system-wide information
-  inspect     Return low-level information on Docker objects
-  kill        Kill one or more running containers
+  inspect     Return low-level information on Docker objects	#获取镜像或容器的元数据
+  kill        Kill one or more running containers	#杀死一个或多个正在运行的容器
   load        Load an image from a tar archive or STDIN
   login       Log in to a Docker registry
   logout      Log out from a Docker registry
@@ -1067,6 +1166,8 @@ JavaEE Hello.java		------------>		Hello.class
 
 Docker images			------------>		DockerFile  是镜像这个模板的描述文件，有自己的语法
 
+使用Dockerfile添加的数据卷 是匿名挂载的， 在/var/lib/docker/volumes/目录下
+
 ~~~shell
 # 示例 在宿主机/home/dockerfile目录下建一个Dockerfile文件
 FROM centos
@@ -1223,6 +1324,14 @@ Mountpoint：挂载点
 
 Docker指定目录挂载、具名挂载、匿名挂载：https://blog.csdn.net/weixin_44231148/article/details/114446492
 
+总结：
+
+如果我们是通过指定路径挂载，那么直接到指定路径查看即可！！！
+
+但是一般我们会使用具名挂载（给数据卷取一个与启动容器相关的名称，便于查找），这样在/var/lib/docker/volumes/路径下就一目了然，当一些数据卷不再需要了，也方便我们管理（比如删除、备份等）。
+
+
+
 拓展：
 
 ~~~shell
@@ -1232,27 +1341,6 @@ docker run -d -P --name nginx02 -v juming-nginx:/etc/nginx:ro nginx
 docker run -d -P --name nginx02 -v juming-nginx:/etc/nginx:rw nginx
 
 # ro 只要看到ro说明这个路径只能通过宿主机来操作，容器内部无法操作
-~~~
-
-## 初始Dockerfile
-
-Dockerfile就是用来构建docker镜像的构建文件 命令脚本 
-
-通过这个脚本可以生成镜像，镜像是一层一层的 脚本是一个个的命令 每个命令都是一层
-
-~~~shell
-# 创建一个dockerfile文件 名字可以随机 建议 Dockerfile 官方默认命名，build的时候可以自动找到这个文件构建
-# 文件中的内容：指令 参数
-FROM centos
-
-VOLUME ["volume01","volume02"]
-
-CMD echo "----end----"
-CMD /bin/bash
-# 这里的每个命令 就是镜像的一层
-
-# 查看文件命令
-cat filename 
 ~~~
 
 
@@ -2323,6 +2411,8 @@ docker run -d -p 637${port}:6379 -p 1637${port}:16379 --name redis-${port} \
 --net redis --ip 172.38.0.1${port} redis:5.0.9-alpine3.11 redis-server /etc/redis/redis.conf
 done
 
+## 小提示  redis容器内默认是没有redis.conf文件的，所以我们需要在外部配置redis.conf文件后，将其挂载到容器内，比如/etc/redis/redis.conf下，这样就可以选择配置文件启动了
+
 ## 6个redis启动成功后，则开始搭建集群
 # 4、进入到redis-1容器内
 docker exec -it redis-1 /bin/sh #redis默认没有bash
@@ -2419,15 +2509,17 @@ docker搭建redis集群完成！！
 
 
 
-# SpringBoot微服务打包Docker镜像
+# 服务打包Docker镜像
+
+### SpringBoot微服务打包Docker镜像
 
 1、构建springboot项目
 
-2、打包应用
+2、打包应用，可执行jar包
 
 3、编写Dockerfile
 
-打包SpringBoot很方便，直接打成一个可执行jar，因此只需要一个jdk的环境即可。将打包的jar和config一级lib等拷贝到同一目录下，并在这个目录下编写Dockerfile文件
+打包SpringBoot很方便，直接打成一个可执行jar，因此只需要一个jdk的环境即可。【如果采用的是Jar和lib三方依赖分离的打包方式，那么将打包的jar和config一级lib等拷贝到同一目录下，并在这个目录下编写Dockerfile文件】
 
 ~~~dockerfile
 ## 1、基础的方式
@@ -2437,7 +2529,9 @@ COPY config/ /config/
 COPY lib/ /lib/
 EXPOSE 8024
 CMD ["--server.port=8024"]	#启动容器时会追加在ENTRYPOINT后面
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","app.jar"]
+# SecureRandom在java各种组件中使用广泛，可以可靠的产生随机数。但在大量产生随机数的场景下，性能会较低。
+# 这时可以使用"-Djava.security.egd=file:/dev/./urandom"加快随机数产生过程。这样可以在一定程度上加快服务的启动
 
 
 # 将所有文件放在同一目录下，比如/home目录，为了在启动容器时能java -jar能找这些文件，所以需要配置工作目录WORKDIR，在容器启动时，就会进入到这个目录
@@ -2459,7 +2553,7 @@ COPY config/ /home/otis/config/
 COPY lib/ /home/otis/lib/
 EXPOSE 8024
 WORKDIR /home/otis
-# 通过 VOLUME 指令创建的挂载点，无法指定主机上对应的目录，是自动生成的。因此这个挂载路径是容器内的路径
+# 通过 VOLUME 指令创建的挂载点，无法指定主机上对应的目录，是自动生成的【匿名挂载，对应主机在/var/lib/docker/volume/目录下】。因此这个挂载路径是容器内的路径
 VOLUME ["/home/otis/config","/home/otis/lib","/home/otis/logs"]
 
 CMD ["--server.port=8024"]
@@ -2488,7 +2582,7 @@ ENTRYPOINT和CMD同时存在时, docker把CMD的命令拼接到ENTRYPOINT命令�
 
 ~~~shell
 # 1.复制jar和Dockerfile到服务器
-# 2.构建镜像
+# 2.构建镜像， . 不要忘了
 docker build -t xxxxx:xx  .
 ~~~
 
@@ -2498,15 +2592,17 @@ docker build -t xxxxx:xx  .
 
 
 
-IDEA直连Docker
+### IDEA直连Docker Service
 
 1、IDEA下载Docker插件【一般这个插件会默认下载】
 
 2、修改服务器的docker配置
 
+![image-20210524105735701](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210524105737.png)
+
 ~~~shell
 ## 1、修改docker服务文件
-vi  /lib/systemd/system/docker.service
+vim  /lib/systemd/system/docker.service
 
 # 2、在 ExecStart 开头的这一行末尾添加 -H tcp://0.0.0.0:2375
 ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock -H tcp://0.0.0.0:2375
@@ -2524,6 +2620,8 @@ systemctl daemon-reload && systemctl restart docker
 ## 4、如果没有关闭防火墙，则需要开放端口
 firewall-cmd --zone=public --add-port=2375/tcp --permanent
 
+# 检测是否监听2375端口
+netstat -lnp | grep 2375
 ~~~
 
 3、在IDEA中连接Docker。在Services中配置，点击+ 连接Dockers Connection，Name：取一个名字，TCP socket：输入安装docker的服务器ip，完成点击ok即有左侧Docker的服务了。
@@ -2552,6 +2650,8 @@ Dockerfile的方式
 
 2、配置Maven【添加 docker-maven-plugin 插件依赖，进行相关配置】
 
+### 使用docker-maven-plugin插件
+
 ~~~xml
 
 <plugin>
@@ -2559,7 +2659,7 @@ Dockerfile的方式
     <artifactId>docker-maven-plugin</artifactId>
     <version>1.0.0</version>
 
-    <!--将插件绑定在某个phase执行-->
+    <!--将插件绑定在某个阶段执行-->
     <executions>
         <execution>
             <id>build-image</id>
@@ -2607,13 +2707,178 @@ Dockerfile的方式
 
 
 
+~~~xml
+<build>
+    <plugins>
+        <!-- maven打包插件 -> 将整个工程打成一个 fatjar -->
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>repackage</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+        <!-- docker的操作 -->
+        <plugin>
+            <groupId>com.spotify</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>1.0.0</version>
+            <configuration>
+                <dockerDirectory>src/main/docker</dockerDirectory>
+                <resources>
+                    <resource>
+                        <targetPath>/</targetPath>
+                        <directory>${project.build.directory}</directory>
+                        <include>${project.build.finalName}.jar</include>
+                    </resource>
+                </resources>
+            </configuration>
+        </plugin>
+        <!-- docker需要的jar的复制操作 -->
+        <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <configuration>
+                        <tasks>
+                            <copy todir="src/main/docker"
+                                  file="target/${project.artifactId}-${project.version}.${project.packaging}"></copy>
+                        </tasks>
+                    </configuration>
+                    <goals>
+                        <goal>run</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+
+    </plugins>
+</build>
+~~~
+
+
+
+
+
+# 思考 ：
+
+### 1、解决容器中的时间与宿主机的时间不一致？
+
+~~~bash
+## 宿主机时间  CST 东八区
+root@eb62116:/root/software>date
+Fri May 21 11:03:09 CST 2021
+
+## 进入到容器，查看时间  UTC 标准时间  可以看出 相差八个小时
+root@eb62116:/root/software>docker exec -it redis-1 /bin/sh
+/data # date
+Fri May 21 03:03:31 UTC 2021
+/data # 
+~~~
+
+宿主机采用了CST时区，CST是指（China Shanghai Time，东八区时间）
+容器采用了UTC时区，UTC是指（Coordinated Universal Time，标准时间），协调世界时，又称世界统一时间、世界标准时间、国际协调时间
+
+#### 共享主机的localtime (方法一)
+
+测试redis容器与主机时间一致
+
+~~~bash
+## 1、挂载主机的配置文件 localtime
+-v /etc/localtime:/etc/localtime
+
+docker run -d -p 6371:6379 -v redis-6371:/data -v /etc/localtime:/etc/localtime --name redis-1 redis:5.0.9-alpine3.11 --appendonly yes
+
+--appendonly yes  ##开启AOF存储
+
+## 查看date CST
+docker exec -it redis-1 date
+Fri May 21 13:36:01 CST 2021
+
+## 2、配置env 环境变量 也可以更改时间
+-e TZ=Asia/Shanghai
+
+docker run -d -p 6371:6379 -v redis-6371:/data -e TZ=Asia/Shanghai --name redis-1 redis:5.0.9-alpine3.11 --appendonly yes 
+~~~
+
+
+
+#### 复制主机的localtime (方法二)
+
+~~~bash
+docker cp /etc/localtime 【容器ID或者NAME】:/etc/localtime
+
+## 如果时间没有更改过来，需要重启docker——我们一般不选择此种方式
+~~~
+
+
+
+### 2、关于进入容器exec和attach
+
+为什么exec 进入容器命令，后面要有一个/bin/bash或/bin/sh？
+
+这是表示载入容器后运行bash ,docker中必须要保持一个进程的运行，要不然整个容器就会退出。
+这个就表示启动容器后启动bash【开启了一个新的终端】。
+
+~~~bash
+## 通过帮助查看得知， 最后必须跟一个bash命令
+root@eb62116:/root/software>docker exec --help
+使用: docker exec [OPTIONS] CONTAINER COMMAND [ARG...]
+
+## 如果需要查看容器内一些信息而又不想进入容器，可以这样用：
+docker exec -it 容器 执行的命令   或者
+docker exec -it 容器 /bin/bash -c 执行的命令
+
+如：docker exec -it c1157de46bbf date
+~~~
+
+
+
+~~~bash
+# docker exec  		进入容器后开启一个新的终端 /bin/bash 可以在里面操作（常用）
+# docker attach   	进入容器正在执行的终端 不会启动新的进程，如果exit退出，那么容器也将退出停止
+
+## 启动容器
+root@eb62116:/root/software>docker run -dit --name mycentos uncle/centos:1.0 
+c1157de46bbf0824566d57e9a5e50e1b8f3339d72ebbf7b2e10beeb30903fb67
+root@eb62116:/root/software>docker ps
+CONTAINER ID   IMAGE              COMMAND                  CREATED         STATUS         PORTS     NAMES
+c1157de46bbf   uncle/centos:1.0   "/bin/sh -c /bin/bash"   7 seconds ago   Up 6 seconds             mycentos
+## 使用attach方式进入，直接进入当前正在执行的终端
+root@eb62116:/root/software>docker attach mycentos 
+[root@c1157de46bbf local]# ls
+bin  etc  games  include  lib  lib64  libexec  sbin  share  src
+## 退出
+[root@c1157de46bbf local]# exit
+exit
+## 发现 容器也停止了
+root@eb62116:/root/software>docker ps
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+
+~~~
+
+
+
+分两部分看，首先需要理解的是docker exec <container>表示在容器中执行命令，那么在容器中执行什么命令呢，就由 后面的参数决定的.
+
+/bin/bash是Linux的一种常用shell脚本，用于解释执行Linux命令，根据镜像支持的shell的不同，可以使用不同的的shell脚本。
+
+所以结合起来我们知道这个命令是用于在支持/bin/bash脚本的容器中执行相应命令。
+
+例如： 执行docker exec -it ubuntu /bin/bash 就会进入ubuntu容器的/bin/bash脚本执行模式，这时候就相当于登录到容器内部，可以通过shell和这个容器即ubuntu交互，可以执行各种Linux命令了
+
+
+
 # 参考博文
 
 https://blog.csdn.net/weixin_43591980/article/details/106272050
 
 https://blog.csdn.net/weixin_43591980/article/details/106316094
-
-
 
 
 
