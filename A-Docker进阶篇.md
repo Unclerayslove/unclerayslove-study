@@ -81,6 +81,8 @@ Compose：重要的概念
 
 ## 安装
 
+docker-compose版本与Docker Engine版本是向下兼容的
+
 官方文档
 
 ![image-20210518204355637](https://raw.githubusercontent.com/Unclerayslove/picture/main/img/20210518204356.png)
@@ -92,9 +94,9 @@ Compose：重要的概念
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
 ## 使用 国内的镜像，更快
-curl -L https://get.daocloud.io/docker/compose/releases/download/1.29.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+curl -L https://get.daocloud.io/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 
-## 授权
+## 授权（一定要授权）
 chmod +x /usr/local/bin/docker-compose
 ~~~
 
@@ -148,9 +150,9 @@ https://docs.docker.com/engine/swarm/
 
 
 
+# Docker Swarm
 
-
-
+Docker社区自己的集群编排管理工具，与之对比的是Kubernetes（K8S）
 
 
 
